@@ -3,13 +3,30 @@ import { useNavigate } from "react-router-dom";
 function Login() {
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // ✅ TODO: Add actual login logic here
+    const email = e.target[0].value;
+    const password = e.target[1].value;
 
-    // 🚀 Redirect to dashboard
-    navigate("/dashboard");
+    try {
+      const res = await fetch("https://back-8.onrender.com/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("token", data.token);
+        navigate("/dashboard");
+      } else {
+        alert(data.message || "Login failed");
+      }
+    } catch (err) {
+      alert("Something went wrong");
+    }
   };
 
   return (
