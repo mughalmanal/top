@@ -11,7 +11,6 @@ function Clients() {
     type: "Retail",
     cnic: "",
   });
-
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
 
@@ -31,7 +30,7 @@ function Clients() {
 
   const handleAddClient = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.phone) return alert("Name & phone required");
+    if (!form.name || !form.phone) return alert("Name and phone are required");
 
     const res = await fetch(API, {
       method: "POST",
@@ -68,14 +67,14 @@ function Clients() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(editForm),
     });
-    const updated = await res.json();
 
+    const updated = await res.json();
     setClients(clients.map((c) => (c._id === editingId ? updated : c)));
     setEditingId(null);
     setEditForm({});
   };
 
-  const filtered = clients.filter(
+  const filteredClients = clients.filter(
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.phone.includes(search)
@@ -102,10 +101,7 @@ function Clients() {
       </div>
 
       {/* Add Client Form */}
-      <form
-        onSubmit={handleAddClient}
-        className="grid md:grid-cols-3 gap-4 mb-6"
-      >
+      <form onSubmit={handleAddClient} className="grid md:grid-cols-3 gap-4 mb-6">
         <input
           name="name"
           value={form.name}
@@ -188,33 +184,33 @@ function Clients() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length > 0 ? (
-              filtered.map((c) => (
+            {filteredClients.length > 0 ? (
+              filteredClients.map((c) => (
                 <tr key={c._id} className="border-t hover:bg-gray-50">
                   {editingId === c._id ? (
                     <>
                       <td className="p-1">
                         <input
-                          className="border p-1 rounded"
                           name="name"
                           value={editForm.name}
                           onChange={handleEditChange}
+                          className="border p-1 rounded"
                         />
                       </td>
                       <td className="p-1">
                         <input
-                          className="border p-1 rounded"
                           name="phone"
                           value={editForm.phone}
                           onChange={handleEditChange}
+                          className="border p-1 rounded"
                         />
                       </td>
                       <td className="p-1">
                         <input
-                          className="border p-1 rounded"
                           name="email"
                           value={editForm.email}
                           onChange={handleEditChange}
+                          className="border p-1 rounded"
                         />
                       </td>
                       <td className="p-1">
@@ -231,18 +227,18 @@ function Clients() {
                       </td>
                       <td className="p-1">
                         <input
-                          className="border p-1 rounded"
                           name="address"
                           value={editForm.address}
                           onChange={handleEditChange}
+                          className="border p-1 rounded"
                         />
                       </td>
                       <td className="p-1">
                         <input
-                          className="border p-1 rounded"
                           name="cnic"
                           value={editForm.cnic}
                           onChange={handleEditChange}
+                          className="border p-1 rounded"
                         />
                       </td>
                       <td className="p-2 space-x-2">
