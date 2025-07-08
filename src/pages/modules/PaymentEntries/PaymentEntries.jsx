@@ -11,6 +11,9 @@ function PaymentEntries() {
     method: "Cash",
     date: "",
     notes: "",
+    bank: "",
+    transactionId: "",
+    chequeNumber: "",
   });
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -46,6 +49,9 @@ function PaymentEntries() {
         method: "Cash",
         date: "",
         notes: "",
+        bank: "",
+        transactionId: "",
+        chequeNumber: "",
       });
     } catch (err) {
       alert("Failed to add payment");
@@ -69,9 +75,7 @@ function PaymentEntries() {
   const handleSaveEdit = async () => {
     try {
       const res = await axios.put(`${API}/${editingId}`, editForm);
-      setPayments(
-        payments.map((p) => (p._id === editingId ? res.data : p))
-      );
+      setPayments(payments.map((p) => (p._id === editingId ? res.data : p)));
       setEditingId(null);
       setEditForm({});
     } catch {
@@ -85,7 +89,7 @@ function PaymentEntries() {
   };
 
   const filtered = payments.filter((p) =>
-    p.payer.toLowerCase().includes(search.toLowerCase())
+    p.payer?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -93,24 +97,12 @@ function PaymentEntries() {
       <h2 className="text-xl font-bold text-blue-900 mb-4">Payment Entries</h2>
 
       {/* Add Form */}
-      <form
-        onSubmit={handleAddPayment}
-        className="grid md:grid-cols-3 gap-4 mb-6"
-      >
+      <form onSubmit={handleAddPayment} className="grid md:grid-cols-2 gap-4 mb-6">
         <input
           name="payer"
           value={form.payer}
           onChange={handleChange}
           placeholder="Client or Vendor Name"
-          className="p-2 border rounded"
-          required
-        />
-        <input
-          name="amount"
-          type="number"
-          value={form.amount}
-          onChange={handleChange}
-          placeholder="Amount in PKR"
           className="p-2 border rounded"
           required
         />
@@ -121,10 +113,74 @@ function PaymentEntries() {
           className="p-2 border rounded"
         >
           <option>Cash</option>
-          <option>Bank Transfer</option>
+          <option>Online</option>
           <option>Cheque</option>
-          <option>Other</option>
         </select>
+
+        {form.method === "Cash" && (
+          <input
+            name="amount"
+            type="number"
+            value={form.amount}
+            onChange={handleChange}
+            placeholder="Amount in PKR"
+            className="p-2 border rounded"
+            required
+          />
+        )}
+
+        {form.method === "Online" && (
+          <>
+            <input
+              name="bank"
+              value={form.bank}
+              onChange={handleChange}
+              placeholder="Bank Name"
+              className="p-2 border rounded"
+              required
+            />
+            <input
+              name="transactionId"
+              value={form.transactionId}
+              onChange={handleChange}
+              placeholder="Transaction ID"
+              className="p-2 border rounded"
+              required
+            />
+            <input
+              name="amount"
+              type="number"
+              value={form.amount}
+              onChange={handleChange}
+              placeholder="Amount in PKR"
+              className="p-2 border rounded"
+              required
+            />
+          </>
+        )}
+
+        {form.method === "Cheque" && (
+          <>
+            <input
+              name="chequeNumber"
+              value={form.chequeNumber}
+              onChange={handleChange}
+              placeholder="Cheque Number"
+              className="p-2 border rounded"
+              required
+            />
+            <input
+              name="amount"
+              type="number"
+              value={form.amount}
+              onChange={handleChange}
+              placeholder="Amount in PKR"
+              className="p-2 border rounded"
+              required
+            />
+          </>
+        )}
+
         <input
           name="date"
           type="date"
@@ -133,6 +189,7 @@ function PaymentEntries() {
           className="p-2 border rounded"
           required
         />
+
         <input
           name="notes"
           value={form.notes}
@@ -140,9 +197,10 @@ function PaymentEntries() {
           placeholder="Notes / Ref #"
           className="p-2 border rounded col-span-2"
         />
+
         <button
           type="submit"
-          className="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800"
+          className="bg-blue-900 text-white px-4 py-2 rounded hover:bg-blue-800 col-span-2"
         >
           Add Payment
         </button>
@@ -218,9 +276,8 @@ function PaymentEntries() {
                           className="border p-1 rounded"
                         >
                           <option>Cash</option>
-                          <option>Bank Transfer</option>
+                          <option>Online</option>
                           <option>Cheque</option>
-                          <option>Other</option>
                         </select>
                       </td>
                       <td className="p-1">
