@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+const API = "https://back-7-9sog.onrender.com/api/payments";
 
 function PaymentEntries() {
   const [payments, setPayments] = useState([]);
@@ -13,47 +16,75 @@ function PaymentEntries() {
   const [editForm, setEditForm] = useState({});
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const fetchPayments = async () => {
+    try {
+      const res = await axios.get(API);
+      setPayments(res.data);
+    } catch (err) {
+      console.error("Fetch failed", err);
+    }
+  };
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleEditChange = (e) =>
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
 
-  const handleAddPayment = (e) => {
+  const handleAddPayment = async (e) => {
     e.preventDefault();
-    const newPayment = {
-      ...form,
-      id: Date.now(),
-    };
-    setPayments([newPayment, ...payments]);
-    setForm({
-      payer: "",
-      amount: "",
-      method: "Cash",
-      date: "",
-      notes: "",
-    });
+    try {
+      const res = await axios.post(API, form);
+      setPayments([res.data, ...payments]);
+      setForm({
+        payer: "",
+        amount: "",
+        method: "Cash",
+        date: "",
+        notes: "",
+      });
+    } catch (err) {
+      alert("Failed to add payment");
+    }
   };
 
-  const handleDelete = (id) =>
-    setPayments(payments.filter((p) => p.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API}/${id}`);
+      setPayments(payments.filter((p) => p._id !== id));
+    } catch {
+      alert("Delete failed");
+    }
+  };
 
   const handleEdit = (payment) => {
-    setEditingId(payment.id);
+    setEditingId(payment._id);
     setEditForm(payment);
   };
 
-  const handleSaveEdit = () => {
-    setPayments(
-      payments.map((p) =>
-        p.id === editingId ? editForm : p
-      )
-    );
-    setEditingId(null);
-    setEditForm({});
+  const handleSaveEdit = async () => {
+    try {
+      const res = await axios.put(`${API}/${editingId}`, editForm);
+      setPayments(
+        payments.map((p) => (p._id === editingId ? res.data : p))
+      );
+      setEditingId(null);
+      setEditForm({});
+    } catch {
+      alert("Update failed");
+    }
   };
 
-  const filteredPayments = payments.filter((p) =>
+  const handleExport = (type) => {
+    const url = `${API}/export/${type}`;
+    window.open(url, "_blank");
+  };
+
+  const filtered = payments.filter((p) =>
     p.payer.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -61,7 +92,7 @@ function PaymentEntries() {
     <div className="bg-white p-6 rounded-xl shadow text-gray-800">
       <h2 className="text-xl font-bold text-blue-900 mb-4">Payment Entries</h2>
 
-      {/* Add Payment Form */}
+      {/* Add Form */}
       <form
         onSubmit={handleAddPayment}
         className="grid md:grid-cols-3 gap-4 mb-6"
@@ -117,18 +148,30 @@ function PaymentEntries() {
         </button>
       </form>
 
-      {/* Search */}
+      {/* Tools */}
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-md font-semibold text-blue-800">
-          Payment History
-        </h3>
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="p-1 px-2 border rounded text-sm w-64"
-        />
+        <h3 className="text-md font-semibold text-blue-800">Payment History</h3>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="p-1 px-2 border rounded text-sm"
+          />
+          <button
+            onClick={() => handleExport("csv")}
+            className="text-sm text-blue-700 hover:underline"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => handleExport("pdf")}
+            className="text-sm text-blue-700 hover:underline"
+          >
+            Export PDF
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -145,10 +188,10 @@ function PaymentEntries() {
             </tr>
           </thead>
           <tbody>
-            {filteredPayments.length > 0 ? (
-              filteredPayments.map((p) => (
-                <tr key={p.id} className="border-t hover:bg-gray-50">
-                  {editingId === p.id ? (
+            {filtered.length > 0 ? (
+              filtered.map((p) => (
+                <tr key={p._id} className="border-t hover:bg-gray-50">
+                  {editingId === p._id ? (
                     <>
                       <td className="p-1">
                         <input
@@ -185,7 +228,7 @@ function PaymentEntries() {
                           className="border p-1 rounded"
                           name="date"
                           type="date"
-                          value={editForm.date}
+                          value={editForm.date?.slice(0, 10)}
                           onChange={handleEditChange}
                         />
                       </td>
@@ -219,7 +262,7 @@ function PaymentEntries() {
                         Rs {p.amount}
                       </td>
                       <td className="p-2">{p.method}</td>
-                      <td className="p-2">{p.date}</td>
+                      <td className="p-2">{p.date?.slice(0, 10)}</td>
                       <td className="p-2">{p.notes}</td>
                       <td className="p-2 space-x-2">
                         <button
@@ -229,7 +272,7 @@ function PaymentEntries() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(p.id)}
+                          onClick={() => handleDelete(p._id)}
                           className="text-red-600 hover:underline"
                         >
                           Delete
