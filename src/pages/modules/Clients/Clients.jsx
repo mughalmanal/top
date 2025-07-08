@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function Clients() {
   const [clients, setClients] = useState([]);
@@ -15,18 +15,33 @@ function Clients() {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
 
+  const API = "https://back-8.onrender.com/api/clients";
+
+  useEffect(() => {
+    fetch(API)
+      .then((res) => res.json())
+      .then((data) => setClients(data));
+  }, []);
+
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleEditChange = (e) =>
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
 
-  const handleAddClient = (e) => {
+  const handleAddClient = async (e) => {
     e.preventDefault();
     if (!form.name || !form.phone) return alert("Name & phone required");
 
-    const newClient = { ...form, id: Date.now().toString() };
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
+
+    const newClient = await res.json();
     setClients([newClient, ...clients]);
+
     setForm({
       name: "",
       phone: "",
@@ -37,18 +52,25 @@ function Clients() {
     });
   };
 
-  const handleDelete = (id) =>
-    setClients(clients.filter((c) => c.id !== id));
+  const handleDelete = async (id) => {
+    await fetch(`${API}/${id}`, { method: "DELETE" });
+    setClients(clients.filter((c) => c._id !== id));
+  };
 
   const handleEdit = (client) => {
-    setEditingId(client.id);
+    setEditingId(client._id);
     setEditForm(client);
   };
 
-  const handleSaveEdit = () => {
-    setClients(
-      clients.map((c) => (c.id === editingId ? { ...editForm } : c))
-    );
+  const handleSaveEdit = async () => {
+    const res = await fetch(`${API}/${editingId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+    const updated = await res.json();
+
+    setClients(clients.map((c) => (c._id === editingId ? updated : c)));
     setEditingId(null);
     setEditForm({});
   };
@@ -62,6 +84,22 @@ function Clients() {
   return (
     <div className="bg-white p-6 rounded-xl shadow text-gray-800">
       <h2 className="text-xl font-bold text-blue-900 mb-4">Clients Management</h2>
+
+      {/* Export Buttons */}
+      <div className="mb-4 flex gap-3">
+        <a
+          href={`${API}/export/csv`}
+          className="px-3 py-1 bg-green-700 text-white rounded hover:bg-green-800 text-sm"
+        >
+          Export CSV
+        </a>
+        <a
+          href={`${API}/export/pdf`}
+          className="px-3 py-1 bg-red-700 text-white rounded hover:bg-red-800 text-sm"
+        >
+          Export PDF
+        </a>
+      </div>
 
       {/* Add Client Form */}
       <form
@@ -152,8 +190,8 @@ function Clients() {
           <tbody>
             {filtered.length > 0 ? (
               filtered.map((c) => (
-                <tr key={c.id} className="border-t hover:bg-gray-50">
-                  {editingId === c.id ? (
+                <tr key={c._id} className="border-t hover:bg-gray-50">
+                  {editingId === c._id ? (
                     <>
                       <td className="p-1">
                         <input
@@ -238,7 +276,7 @@ function Clients() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete(c.id)}
+                          onClick={() => handleDelete(c._id)}
                           className="text-red-600 hover:underline"
                         >
                           Delete
